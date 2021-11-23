@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "969804744059",
+    "project_id": "chat-wa-35830",
+    "storage_bucket": "chat-wa-35830.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:969804744059:android:a9fbc09c70c905c65529de",
+        "android_client_info": {
+          "package_name": "com.chatwa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "969804744059-0jfqhf5eel17278atnn04gd5o1tnj7b1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2r4WBHR6qEGwVQ_l4DC4bk-SyjJZTGnM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "969804744059-0jfqhf5eel17278atnn04gd5o1tnj7b1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
