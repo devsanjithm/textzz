@@ -6,6 +6,7 @@ import auth from '@react-native-firebase/auth';
 import chatscreen from "../screen/chatscreen";
 import Settingpage from "../screen/settings"
 import Profile from "../screen/profile";
+import Selectuser from "../screen/selectuser";
 import Nameedit from "../screen/nameedit";
 import Phoneedit from "../screen/phoneedit";
 import { AuthContext } from "../navigator/Authprovider";
@@ -146,6 +147,28 @@ function homestack(){
         <homeStack.Screen name="Phoneedit" component={Phoneedit}
           options={{
             headerShown:false
+          }}
+        />
+        <homeStack.Screen name="Selectuser" component={Selectuser}
+          options={{
+            title:'SelectUser',
+            headerRight:()=>(
+              <View style={{flexDirection:"row"}}> 
+                <Icons name="search" 
+                onPress={()=>search()}
+                style={{marginRight:10}} size={25} color="#fff"/>
+              </View>
+            ),
+            headerShadowVisible:false,
+            headerTitleStyle:{
+              fontSize:19,
+              color:"white"
+            },
+            headerStyle: {
+              backgroundColor: '#1e81b0',
+            },
+            headerTintColor:"#fff",
+            headerTitleAlign:"center"
           }}
         />
         <homeStack.Screen name="Settingpage" component={Settingpage}

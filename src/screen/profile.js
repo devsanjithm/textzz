@@ -9,7 +9,7 @@ import firestore from '@react-native-firebase/firestore';
 import ImagePicker, {ImageOrVideo} from 'react-native-image-crop-picker';
 import Loading from "./loading";
 import AppStatusBar from "./statusbar";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 function profile({navigation}){
 
@@ -18,23 +18,8 @@ function profile({navigation}){
   const {userinfo,setUserinfo} = useContext(AuthContext);
   const [url,setUrl] = useState(userinfo.AvatarURL);
   const [loading,setLoading] = useState(false);
-    const handleclick = () => {
-        Alert.alert(
-          'Logout',
-          'Do You Want to Logout ?',
-          [
-            {text: 'NO', onPress: () => console.warn('no pressed')},
-            {text: 'YES', onPress: () => alertcheck()},
-          ]
-        );
-      }
-      const alertcheck =()=>{
-        auth().signOut().then(() => {
-          console.log("logout successfully");
-      }).catch((error) => {
-          console.log(error.message);
-      });
-      }
+   
+    
      const imageupload = async (imgurl) => {
       await storage().ref().child("useravatar/"+userinfo.id).putFile(imgurl)
       const imageurl = await  storage().ref().child("useravatar/"+userinfo.id).getDownloadURL();
@@ -71,7 +56,6 @@ function profile({navigation}){
      }
 
     const imgfile=()=>{
-      getData();
       ImagePicker.openPicker({
         cropping: true,
       }).then(image => {
@@ -80,6 +64,8 @@ function profile({navigation}){
         const img1url = setUrl(url=>imgurl);
         setLoading(true);
         imageupload(imgurl);
+      }).catch((e)=>{
+        console.log(e);
       });
      
   }

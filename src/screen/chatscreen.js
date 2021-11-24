@@ -11,7 +11,6 @@ function chatscreen({route}){
     const {id} = route.params;
     const {userinfo,setUserinfo} = useContext(AuthContext);
     const {searchkey,setSearchkey} = useContext(AuthContext);
-    const {latsm,setLatsm} = useContext(AuthContext);
     const [inputValue,setInputValue] = useState("");
     const [listMessage,setListMessage] = useState([]);
     const [loading,setLoading] = useState(true);
@@ -21,9 +20,7 @@ function chatscreen({route}){
     var cupp = id;
     var removeListener = "";
     const [mme,setMee] = useState();
-    const imgurl = "https://backgroundcheckall.com/wp-content/uploads/2017/12/whatsapp-default-background-wallpaper-8.jpg";
-
-
+    const imgurl = "https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png";
     const currentUser = userinfo.id
 
     useEffect(() => {
@@ -48,7 +45,7 @@ function chatscreen({route}){
 
       
 
-   function nnew (){
+   async function nnew (){
             if (removeListener) {
                 removeListener();
             }
@@ -64,16 +61,27 @@ function chatscreen({route}){
             }
             setListMessage([])
             //const nstub =collection(firestore(),"messages", chatid,chatid)
-             removeListener = firestore().collection("messages").doc(chatid).collection(chatid)
+            
+          removeListener = firestore().collection("messages").doc(chatid).collection(chatid)
             .onSnapshot((querySnapshot) => {
-                querySnapshot.docChanges().forEach((doc) => {
-                    var data = doc.doc.data();
-                    if(doc.type === "added"){
-                        setListMessage(listMessage=>listMessage.concat(data));
-                    }
-                });
+               
+
+                const messages = querySnapshot.docs.map(doc => {
+                    const firebaseData = doc.data();
+          
+                    const data = {
+                      content: '',
+                      ...firebaseData
+                    };
+          
+                    return data;
+
             });
-           setLoading(false)
+            setListMessage(messages);
+           setLoading(false);
+        });
+            
+
     }
 
    
@@ -129,8 +137,49 @@ function chatscreen({route}){
     
    
     
-    const onSendMessage = (content, type) => {
+    const onSendMessage =async (content, type) => {
         
+        console.log(listMessage.length)
+           if(listMessage.length === 0){
+               var img ="";
+               var name = "";
+               await firestore().collection("users").doc(cupp).get()
+               .then((doc)=>{
+                   console.log(doc.data())
+                   img = doc.data().AvatarURL;
+                   name = doc.data().Displayname;
+               });
+               console.log("stared")
+               console.log(img)
+               console.log(name)
+               await firestore()
+               .collection("home")
+               .doc(currentUser)
+               .collection("userlist")
+               .doc(cupp)
+               .set({latestmessage:"",id:cupp,Displayname:name,AvartarURL:img})
+               .then(()=>{
+                console.log("created data")
+               }).catch((e)=>{
+                   console.log(e);
+               })
+               
+               await firestore()
+                    .collection("home")
+                    .doc(cupp)
+                    .collection("userlist")
+                    .doc(currentUser)
+                    .set({latestmessage:"",id:userinfo.id,Displayname:userinfo.Displayname,
+                            AvartarURL:userinfo.AvatarURL})
+                    .then(()=>{
+                        console.log("craeted data")
+                    })
+                    .catch((e)=>{
+                        console.log(e);
+                    })
+                console.log("ended")
+              }
+
       if (content.trim() === '') {
           return
       }
@@ -147,6 +196,36 @@ function chatscreen({route}){
           type: type
       }
       setInputValue("");
+      firestore()
+        .collection("home")
+        .doc(currentUser)
+        .collection("userlist")
+        .doc(cupp)
+        .set({latestmessage: {
+          content,
+          createdAt: new Date().getTime()
+        }},{merge:true})
+        .then(()=>{
+            console.log("latestmessage updated")
+        })
+        .catch((e)=>{
+            console.log(e);
+        })
+      firestore()
+        .collection("home")
+        .doc(cupp)
+        .collection("userlist")
+        .doc(currentUser)
+        .set({latestmessage: {
+          content,
+          createdAt: new Date().getTime()
+        }},{merge:true})
+        .then(()=>{
+            console.log("latestmessage updated")
+        })
+        .catch((e)=>{
+            console.log(e);
+        })
       firestore()
           .collection("messages")
           .doc(groupchatid)

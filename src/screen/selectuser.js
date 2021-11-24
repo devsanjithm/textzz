@@ -1,74 +1,65 @@
 import React,{useState,useContext,useEffect} from "react";
 import { View,Text,TextInput,Alert,Image,TouchableOpacity,FlatList,Pressable,Button,SafeAreaView,StyleSheet } from 'react-native';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import AppStatusBar from "./statusbar";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from "../navigator/Authprovider";
 import Loading from "./loading";
-import moment from 'moment';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-function home({navigation}){
+function selectuser({navigation}){
     
     const [info, setInfo] = useState([]);
+    const {user,setUser} = useContext(AuthContext);
     const [info1, setInfo1] = useState([]);
     const {userinfo,setUserinfo} = useContext(AuthContext);
     const {searchkey,setSearchkey} = useContext(AuthContext);
+    const [inputValue,setInputValue] = useState("");
     const [loading,setLoading] = useState(true);
     let data=[];
     var d = 1;
 
     function search(text){   
       const newData =info1.filter(item => {  
-          console.log(item.Displayname)    
+           
         const itemData = `${item.Displayname.toUpperCase()}`;
          const textData = text.toUpperCase();
           
          return itemData.indexOf(textData) > -1;    
       });
       
-       setInfo(newData);
-    }
-
-    function getdata(){
-      
+       setInfo(newData)
     }
     
-      useEffect(() => {
-        setSearchkey(0)
-        const unsubscribe  = firestore()
-        .collection('home').doc(userinfo.id).collection("userlist")
-        .orderBy('latestmessage.createdAt', 'desc')
-        .onSnapshot(querySnapshot => {
-          console.log(querySnapshot);
-            const threads = querySnapshot.docs.map(element => {
-              return{
-                id:element.id,
-                name:"",
-                
-                latestmessage:{
-                  content:""
-                },
-                ...element.data()
-              };
-          });
-          console.log(threads)
-          setInfo(threads);
-          setInfo1(threads);
-          if (loading) {
-            setLoading(false);
+      function getdata(){
+        setInfo([])
+        firestore().collection("users").get().then((doc)=>{
+          doc.forEach(element => {
+
+            var data = element.data();
+            if (data.id !== user.uid) {
+              setInfo(arr => [
+                  ...arr,
+                  data
+              ]);
+              setInfo1(arr => [
+                ...arr,
+                data
+            ]);
           }
         });
-       
+      });
+        setLoading(false)
+      }
+
+      useEffect(() => {
+        setSearchkey(0)
+        getdata();
         
-        return ()=>{
-            unsubscribe();
-            console.log("return")
-        }
       }, [])
 
-      function Item({ title, dp,lm,lmtime}) {
-        const s = moment(lmtime).format("hh:mm  A")
+      function Item({ title, dp}) {
         return (
           <View style={styles.item}>
             <View style={styles.imgwrap}>
@@ -79,11 +70,8 @@ function home({navigation}){
             <View style={styles.textsection}>
               <View style={styles.userinfo}>
                 <Text style={styles.title}>{title}</Text>
-                <View style={{position:"absolute",right:55,top:5}}>
-                <Text style={{fontSize:10,color:"black"}}>{s}</Text>
-                </View>
               </View>
-              <Text style={{fontSize:10,color:"#333333"}}>{lm}</Text>
+              <Text style={{fontSize:14,color:"#333333"}}></Text>
             </View>
           </View>
         );
@@ -121,24 +109,16 @@ function home({navigation}){
          renderItem={({item})=>(
                 <TouchableOpacity
                 onPress={()=>{
-                  setInfo(info1)
+                  setInfo(info1);
                   navigation.navigate('Chatscreen',{id:item.id, disname :item.Displayname})}}
                  > 
-                <Item title={item.Displayname} dp = {item.AvartarURL}  lm = {item.latestmessage.content}
-                lmtime={item.latestmessage.createdAt}
-                />
+                <Item title={item.Displayname} dp = {item.AvatarURL}  />
                 </TouchableOpacity>
         )}
          keyExtractor={item => item.id}
          ListHeaderComponent={searchfinder()}
          />
-         <View style={styles.mesplus}>
-           <Pressable onPress={()=>navigation.navigate("Selectuser")}>
-           <View style={styles.outercircle}>
-              <Icon name="message-plus" size={33} color="#fff" style={styles.messageplus}/>
-            </View>
-            </Pressable>
-         </View>
+
         </SafeAreaView>
      </View>
  );
@@ -174,6 +154,7 @@ const styles=StyleSheet.create({
     },
     userinfo:{
       flexDirection:"row",
+      justifyContent:"space-between",
       marginBottom:5
     },
     topbox:{
@@ -206,4 +187,4 @@ const styles=StyleSheet.create({
       backgroundColor:"#1e81b0"
     }
 });
-export default home;
+export default selectuser;

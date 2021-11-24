@@ -28,16 +28,9 @@ function signup({navigation}){
                     id:user.user.uid, 
                     AvatarURL:"https://www.pngkit.com/png/detail/281-2812821_user-account-management-logo-user-icon-png.png"
                 }).then(() => {                        
-                     firestore().collection("home").doc(user.user.uid)
-                     .set({
-                         latestmessage:"hi"
-                     })
-                     .then(()=>{
+                    
                          alert("Welcome to TextZZ");
-                     })
-                     .catch(error=>{
-                         console.log('something went wrong ',error);
-                     })
+    
                 }).catch((err) => {
                     setError(err.message);
                 })
