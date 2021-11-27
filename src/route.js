@@ -18,10 +18,10 @@ function route(){
     }
 
     // Handle user state changes
-    function onAuthStateChanged(user) {
+    async function onAuthStateChanged(user) {
       setUser(user);
       if(user){
-        getuserdata(user.uid);
+       await getuserdata(user.uid);
       }
       
       if (initializing) setInitializing(false);

@@ -13,10 +13,13 @@ function home({navigation}){
     const [info, setInfo] = useState([]);
     const [info1, setInfo1] = useState([]);
     const {userinfo,setUserinfo} = useContext(AuthContext);
+    const {user,setUser} = useContext(AuthContext)
     const {searchkey,setSearchkey} = useContext(AuthContext);
     const [loading,setLoading] = useState(true);
     let data=[];
     var d = 1;
+    const currentUser = user.uid;
+
 
     function search(text){   
       const newData =info1.filter(item => {  
@@ -29,18 +32,14 @@ function home({navigation}){
       
        setInfo(newData);
     }
-
-    function getdata(){
-      
-    }
     
       useEffect(() => {
         setSearchkey(0)
         const unsubscribe  = firestore()
-        .collection('home').doc(userinfo.id).collection("userlist")
+        .collection('home').doc(currentUser).collection("userlist")
         .orderBy('latestmessage.createdAt', 'desc')
-        .onSnapshot(querySnapshot => {
-          console.log(querySnapshot);
+        .onSnapshot((querySnapshot) => {
+
             const threads = querySnapshot.docs.map(element => {
               return{
                 id:element.id,
@@ -52,15 +51,13 @@ function home({navigation}){
                 ...element.data()
               };
           });
-          console.log(threads)
+          
           setInfo(threads);
           setInfo1(threads);
           if (loading) {
             setLoading(false);
           }
         });
-       
-        
         return ()=>{
             unsubscribe();
             console.log("return")
@@ -68,7 +65,12 @@ function home({navigation}){
       }, [])
 
       function Item({ title, dp,lm,lmtime}) {
-        const s = moment(lmtime).format("hh:mm  A")
+        function timedate(){
+            const date = moment(Number(lmtime)).format('L');
+            const time = moment(Number(lmtime)).format('LT');
+            const now1 = moment(Number(lmtime)).fromNow();
+            return now1
+      }
         return (
           <View style={styles.item}>
             <View style={styles.imgwrap}>
@@ -80,10 +82,10 @@ function home({navigation}){
               <View style={styles.userinfo}>
                 <Text style={styles.title}>{title}</Text>
                 <View style={{position:"absolute",right:55,top:5}}>
-                <Text style={{fontSize:10,color:"black"}}>{s}</Text>
+                <Text style={{fontSize:10,color:"black"}}>{timedate()}</Text>
                 </View>
               </View>
-              <Text style={{fontSize:10,color:"#333333"}}>{lm}</Text>
+              <Text numberOfLines={1} style={{fontSize:10,color:"#333333"}}>{lm}</Text>
             </View>
           </View>
         );

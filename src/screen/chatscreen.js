@@ -1,5 +1,5 @@
 import React,{useState,useContext,useEffect} from "react";
-import { View,Text,TextInput,ScrollView,ImageBackground,SafeAreaView,StyleSheet } from 'react-native';
+import { View,Text,TextInput,ScrollView,Alert,ImageBackground,TouchableOpacity,SafeAreaView,StyleSheet } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -16,6 +16,7 @@ function chatscreen({route}){
     const [loading,setLoading] = useState(true);
     const [val, setval] = useState(0);
     const [groupchatid,setGroupchatid] = useState("");
+    const [contenth,Setcontenth] = useState(1);
     var chatid="";
     var cupp = id;
     var removeListener = "";
@@ -95,12 +96,48 @@ function chatscreen({route}){
       return hash
     }
     
+
     function renderListMessage () {
-       
+        var checkdate="";
+        function timestamp(lmtime){
+            const s = moment(Number(lmtime)).format('LT');
+            const date =moment(Number(lmtime)).format('LL');
+            if(checkdate !== date ){
+                checkdate=date;
+                viewListMessage.push(<View style={styles.date}>
+                    <Text style={{color:"gray"}}>{date}</Text>
+                </View>)
+            }
+            return s;
+        }
+        function deletemessage(timestamp,content){
+            Alert.alert(
+                '',
+                'Delete message ?',
+                [
+                  {text: 'NO', onPress: () => console.log("no pressed")},
+                  {text: 'YES', onPress: () => {
+
+                      Setcontenth(0);
+                    firestore().collection("messages").doc(groupchatid).collection(groupchatid)
+                    .doc(timestamp).set({content:""},{merge:true}).then(() => {
+                        console.log('Message deleted!');
+                      });
+                  }},
+                ]
+              );
+           
+        }
       
       if (listMessage.length > 0) {
     
-         var viewListMessage=[]
+         var viewListMessage=[];
+         var firstmessagedate = listMessage[0].timestamp;
+         const date =moment(Number(firstmessagedate)).format('LL');
+         checkdate=date;
+            viewListMessage.push(<View style={styles.date}>
+                <Text style={{color:"gray"}}>{date}</Text>
+            </View>)
 
           listMessage.forEach((item, index) => {
               if (item.idFrom === currentUser) {
@@ -108,9 +145,18 @@ function chatscreen({route}){
                  
                   if (item.type === 0) {
                       viewListMessage.push(
-                        <View style={styles.messageme}>
-                            <Text style={styles.message2}>{item.content}</Text>
+                          <TouchableOpacity onLongPress={() => {
+                           deletemessage(item.timestamp,item.content);
+                        }}
+                        delayLongPress={1000}>
+                        <View style={styles.messageme} key={item.timestamp}>
+                            <View>
+                            <Text style={[item.content?styles.message2:styles.message1deleted]}>{item.content?item.content:"message deleted"}</Text>
+                            <View style={{alignSelf:"flex-end",marginRight:3,marginBottom:4,paddingLeft:7}}>
+                            <Text style={{fontSize:8}}>{timestamp(item.timestamp)}</Text></View>
+                            </View>
                         </View>
+                        </TouchableOpacity>
                 
                     
                       )
@@ -120,11 +166,18 @@ function chatscreen({route}){
                   // Item left (peer message)
                   if (item.type === 0) {
                       viewListMessage.push(
-                    
-                        <View style={styles.messagefrom}>
-                            <Text style={styles.message1}>{item.content}</Text>
+                        <TouchableOpacity onLongPress={() => {
+                            deletemessage(item.timestamp);
+                        }}
+                        delayLongPress={1000}>
+                        <View style={styles.messagefrom} key={item.timestamp}>
+                            <View>
+                            <Text style={[item.content?styles.message1:styles.message1deleted]}>{item.content?item.content:"message deleted"}</Text>
+                            <View style={{alignSelf:"flex-start",marginLeft:3,marginBottom:4,paddingRight:7}}>
+                            <Text style={{fontSize:8}}>{timestamp(item.timestamp)}</Text></View>
+                            </View>
                         </View>
-                    
+                        </TouchableOpacity>
                       )
                   
                   } 
@@ -138,8 +191,8 @@ function chatscreen({route}){
    
     
     const onSendMessage =async (content, type) => {
-        
-        console.log(listMessage.length)
+        Setcontenth(1);
+        console.log(listMessage)
            if(listMessage.length === 0){
                var img ="";
                var name = "";
@@ -149,9 +202,6 @@ function chatscreen({route}){
                    img = doc.data().AvatarURL;
                    name = doc.data().Displayname;
                });
-               console.log("stared")
-               console.log(img)
-               console.log(name)
                await firestore()
                .collection("home")
                .doc(currentUser)
@@ -183,10 +233,8 @@ function chatscreen({route}){
       if (content.trim() === '') {
           return
       }
-    
-      const timestamp = moment()
-          .valueOf()
-          .toString()
+      
+      const timestamp = moment().valueOf().toString();
     
       const itemMessage = {
           idFrom: currentUser,
@@ -203,7 +251,7 @@ function chatscreen({route}){
         .doc(cupp)
         .set({latestmessage: {
           content,
-          createdAt: new Date().getTime()
+          createdAt: timestamp
         }},{merge:true})
         .then(()=>{
             console.log("latestmessage updated")
@@ -259,7 +307,9 @@ return(
         >
        <ScrollView ref={el => setMee(el)}
       onContentSizeChange={(contentWidth, contentHeight) => {
-        mme.scrollToEnd({ animated: false });
+          if(contenth){
+                mme.scrollToEnd({ animated: false});
+          }
       }}
        >
           
@@ -275,7 +325,9 @@ return(
                 placeholder="Type your message..."
                 onChangeText={text=>setInputValue(text)}
                 style={styles.inputbox}
-                onKeyPress={()=>onKeyboardPress}
+                onKeyPress={()=>{onKeyboardPress
+                mme.scrollToEnd()
+                }}
                 >
                 </TextInput>
             </View>
@@ -295,13 +347,22 @@ const styles = StyleSheet.create({
         backgroundColor:"#fff",
     },
     messageme:{
+        flex:1,
         backgroundColor:"#e3f2fd",
         margin:10,
         alignSelf:"flex-end",
         borderTopStartRadius:12,
         borderBottomLeftRadius:12,
         borderTopRightRadius:12,
-        elevation:2
+        elevation:2,
+        flexDirection:"column"
+    },
+    date:{
+        backgroundColor:"#fff",
+        marginTop:7,
+        padding:5,
+        borderRadius:10,
+        alignSelf:"center",
     },
     image: {
         flex: 1,
@@ -315,17 +376,27 @@ const styles = StyleSheet.create({
         alignSelf:"flex-start",
         borderTopStartRadius:12,
         borderBottomRightRadius:12,
-        borderTopRightRadius:12
+        borderTopRightRadius:12,
+        flexDirection:"column"
     },
     message1:{
         marginRight:3,
         padding:7,
+        paddingBottom:3,
         color:"#263238",
         fontSize:16,
+    },
+    message1deleted:{
+        marginRight:3,
+        padding:7,
+        paddingBottom:3,
+        color:"grey",
+        fontSize:14,
     },
     message2:{
         marginRight:3,
         padding:7,
+        paddingBottom:3,
         color:"#263238",
         fontSize:16,
     },
