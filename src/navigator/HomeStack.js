@@ -18,6 +18,7 @@ const homeStack = createNativeStackNavigator();
 
 function homestack(){
   const {userinfo,setUserinfo} = useContext(AuthContext);
+  const {onlinecheck,setonlinecheck} = useContext(AuthContext);
   const [visible, setVisible] = useState(false);
   const {searchkey,setSearchkey} = useContext(AuthContext);
 
@@ -111,11 +112,30 @@ function homestack(){
           
         })}/>
         <homeStack.Screen name="Chatscreen" component={chatscreen}
-          options={({ route }) => ({ title: route.params.disname,
+          options={({ route }) => ({ 
+            title: route.params.disname,
           headerTitleStyle:{
             fontSize:19,
             color:'white'
           },
+          headerShown:true,
+          headerRight:()=>(
+              <View>
+                <Text style={[onlinecheck?{
+                  fontSize:1,
+                  backgroundColor:"#3aea09",
+                  borderRadius:30,
+                  padding:10,
+                  borderWidth:2
+                }:{
+                  fontSize:1,
+                 backgroundColor:"red",
+                 borderRadius:30,
+                 padding:10,
+                 borderWidth:2
+                }]}></Text>
+              </View>
+          ),
           headerStyle: {
             backgroundColor: '#1e81b0',
           },

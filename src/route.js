@@ -5,12 +5,13 @@ import AuthStack from "./navigator/AuthStack";
 import auth from '@react-native-firebase/auth';
 import { AuthContext } from "./navigator/Authprovider";
 import firestore from '@react-native-firebase/firestore';
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function route(){
     const [initializing, setInitializing] = useState(true);
     const {user,setUser} = useContext(AuthContext)
     const {userinfo,setUserinfo} = useContext(AuthContext);
+
 
     const getuserdata =async(uid)=>{
         const data = await firestore().collection("users").doc(uid).get();

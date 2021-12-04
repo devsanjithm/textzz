@@ -8,9 +8,10 @@ import auth from '@react-native-firebase/auth';
   const [user, setUser] = useState(null);
   const [userinfo,setUserinfo] = useState([]);
   const [searchkey,setSearchkey] = useState(0);
+  const [ onlinecheck,setonlinecheck] = useState(0);
     return (
       <AuthContext.Provider
-        value={{user,setUser,userinfo,setUserinfo,searchkey,setSearchkey}}
+        value={{user,setUser,userinfo,setUserinfo,searchkey,setSearchkey,onlinecheck,setonlinecheck}}
       >
         {children}
       </AuthContext.Provider>

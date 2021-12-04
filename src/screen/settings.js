@@ -3,17 +3,32 @@ import { View,Text,TextInput,StyleSheet,TouchableOpacity } from 'react-native';
 import AppStatusBar from "./statusbar";
 import firestore from '@react-native-firebase/firestore';
 import { AuthContext } from "../navigator/Authprovider";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function settings({navigation}){
     const {userinfo,setUserinfo} = useContext(AuthContext);
     const [text, onChangeText] = useState(userinfo.PhoneNumber);
 
+    const getlocaldata = async () => {
+        try {
+          const jsonValue = await AsyncStorage.getItem('homeuserlist')
+           const value = (jsonValue != null ? JSON.parse(jsonValue) : null);
+           console.log(value);
+        } catch(e) {
+          // error reading value
+          console.log(e)
+        }
+      }
 
 
     return(
         <View style={styles.container}>
             <AppStatusBar backgroundColor={"#1e81b0"} barStyle={'light-content'} />
-            
+            <TouchableOpacity
+            onPress={()=>{getlocaldata()}}
+            >
+                <Text>welcome</Text>
+            </TouchableOpacity>
         </View>
     );
 }

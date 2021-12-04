@@ -11,19 +11,23 @@ function chatscreen({route}){
     const {id} = route.params;
     const {userinfo,setUserinfo} = useContext(AuthContext);
     const {searchkey,setSearchkey} = useContext(AuthContext);
+    const {onlinecheck,setonlinecheck}= useContext(AuthContext);
     const [inputValue,setInputValue] = useState("");
     const [listMessage,setListMessage] = useState([]);
     const [loading,setLoading] = useState(true);
+    const [isOnline,setonline] = useState("");
+    const [iscount,setcount] = useState(1);
     const [val, setval] = useState(0);
     const [groupchatid,setGroupchatid] = useState("");
     const [contenth,Setcontenth] = useState(1);
     var chatid="";
     var cupp = id;
     var removeListener = "";
+    var anotherlisterner = "";
+    var isonline = "";
     const [mme,setMee] = useState();
     const imgurl = "https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png";
     const currentUser = userinfo.id
-
     useEffect(() => {
         setSearchkey(0);
         setLoading(true)
@@ -38,7 +42,23 @@ function chatscreen({route}){
           return () => {
             if (removeListener) {
               removeListener();
-              console.log("loged")
+              anotherlisterner();
+              console.log("loged");
+              if(isonline=== "user1"){
+                firestore().collection("messages").doc(chatid).set({user1:"false"},{merge:true})
+                .then(()=>{
+                    console.log("updated");
+                }).catch((e)=>{
+                 console.log(e);
+                })
+              }else{
+                firestore().collection("messages").doc(chatid).set({user2:"false"},{merge:true})
+                .then(()=>{
+                    console.log("updated");
+                }).catch((e)=>{
+                 console.log(e);
+                })
+              }
             }
         }
       }, [])
@@ -56,9 +76,24 @@ function chatscreen({route}){
             ) {
                 setGroupchatid(`${currentUser}-${cupp}`)
                 chatid=`${currentUser}-${cupp}`;
+                firestore().collection("messages").doc(chatid).set({user1:"true"},{merge:true})
+                    .then(()=>{
+                        console.log("updated");
+                    }).catch((e)=>{
+                     console.log(e);
+                    })
+                    isonline="user1";
             } else {
                 setGroupchatid(`${cupp}-${currentUser}`)
                 chatid=`${cupp}-${currentUser}`;
+                firestore().collection("messages").doc(chatid).set({user2:"true"},{merge:true})
+                    .then(()=>{
+                        console.log("updated");
+                    }).catch((e)=>{
+                     console.log(e);
+                })
+        
+                isonline="user2";
             }
             setListMessage([])
             //const nstub =collection(firestore(),"messages", chatid,chatid)
@@ -82,7 +117,40 @@ function chatscreen({route}){
            setLoading(false);
         });
             
+        firestore().collection("home").doc(currentUser).collection("userlist").doc(cupp)
+        .set({count:0},{merge:true}).then((s)=>{
+            console.log(s);
+        }).catch((e)=>{
+            console.log("up")
+            console.log(e);
+        })
 
+        anotherlisterner= firestore().collection("messages").doc(chatid)
+        .onSnapshot((snap)=>{
+            if(isonline==="user2"){
+                var data = snap.data().user1;
+                if(data === "true"){
+                    setonline(1);
+                    setonlinecheck(1);
+                    setcount(1);
+                }else{
+                    setonline(0);
+                    setonlinecheck(0);
+                }
+            }else{
+                var data = snap.data().user2;
+                if(data === "true"){
+                    setonline(1);
+                    setonlinecheck(1);
+                    setcount(1)
+                }else{
+                    setonline(0);
+                    setonlinecheck(0);
+                }
+            }
+        })
+   
+        
     }
 
    
@@ -266,7 +334,7 @@ function chatscreen({route}){
         .doc(currentUser)
         .set({latestmessage: {
           content,
-          createdAt: new Date().getTime()
+          createdAt: timestamp
         }},{merge:true})
         .then(()=>{
             console.log("latestmessage updated")
@@ -282,12 +350,23 @@ function chatscreen({route}){
           .set(itemMessage)
           .then(() => {
              setInputValue("");
-             
+                 if(!(isOnline)){ 
+                    setcount(iscount+1);
+                 }
           })
           .catch(err => {
               console.log(err.message);
               setInputValue(content)
           })
+          if(!(isOnline)){
+                firestore().collection("home").doc(cupp).collection("userlist").doc(currentUser)
+                .set({count:iscount},{merge:true}).then((s)=>{
+                    console.log("count added");
+                }).catch((e)=>{
+                    console.log("down");
+                    console.log(e);
+                })
+        }
     }
     
     function onKeyboardPress(event) {
@@ -301,6 +380,7 @@ function chatscreen({route}){
 
 return(
     <View style={styles.container}>
+         
         <Loading loading = {loading}/>
          <ImageBackground resizeMode="cover" style={styles.image}
         source={{uri:imgurl}}
@@ -426,6 +506,12 @@ const styles = StyleSheet.create({
     },
     inputbox:{
         paddingLeft:25,
-    }
+    },
+    topbox:{
+        width:'100%',
+        height:10,
+        paddingBottom:15,
+        backgroundColor:"#fff"
+      },
 });
 export default chatscreen;

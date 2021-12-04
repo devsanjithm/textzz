@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from "../navigator/Authprovider";
 import Loading from "./loading";
 import moment from 'moment';
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function home({navigation}){
     
@@ -19,8 +19,8 @@ function home({navigation}){
     let data=[];
     var d = 1;
     const currentUser = user.uid;
-
-
+    var unsubscribe="";
+    var threads = "";
     function search(text){   
       const newData =info1.filter(item => {  
           console.log(item.Displayname)    
@@ -33,38 +33,70 @@ function home({navigation}){
        setInfo(newData);
     }
     
-      useEffect(() => {
-        setSearchkey(0)
-        const unsubscribe  = firestore()
+    const storeData = async (threads) => {
+      try {
+        console.log(threads);
+        var key = "userlist-"+currentUser;
+        const jsonValue = JSON.stringify(threads)
+        await AsyncStorage.setItem(key, jsonValue)
+        console.log("data saved");
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+
+    const getlocaldata = async () => {
+      try {
+        var key = "userlist-"+currentUser;
+        const jsonValue = await AsyncStorage.getItem(key)
+         const value = (jsonValue != null ? JSON.parse(jsonValue) : null);
+         setInfo(value);
+         if (loading) {
+          setLoading(false);
+        }
+      } catch(e) {
+        // error reading value
+      }
+    }
+
+   function getdata(){
+      unsubscribe  = firestore()
         .collection('home').doc(currentUser).collection("userlist")
         .orderBy('latestmessage.createdAt', 'desc')
         .onSnapshot((querySnapshot) => {
 
-            const threads = querySnapshot.docs.map(element => {
+            threads = querySnapshot.docs.map(element => {
               return{
                 id:element.id,
-                name:"",
-                
+               
                 latestmessage:{
                   content:""
                 },
                 ...element.data()
               };
           });
-          
           setInfo(threads);
           setInfo1(threads);
           if (loading) {
             setLoading(false);
           }
         });
+    }
+  
+
+      useEffect(() => {
+        setSearchkey(0)
+        getlocaldata();
+        getdata();
         return ()=>{
+            console.log("return");
             unsubscribe();
-            console.log("return")
+            storeData(threads);
         }
       }, [])
 
-      function Item({ title, dp,lm,lmtime}) {
+      function Item({ title, dp,lm,lmtime,co}) {
         function timedate(){
             const date = moment(Number(lmtime)).format('L');
             const time = moment(Number(lmtime)).format('LT');
@@ -83,6 +115,9 @@ function home({navigation}){
                 <Text style={styles.title}>{title}</Text>
                 <View style={{position:"absolute",right:55,top:5}}>
                 <Text style={{fontSize:10,color:"black"}}>{timedate()}</Text>
+                <View style={{position:"absolute",top:23,right:7}}>
+                <Text style={[co!==0?styles.count:{fontSize:1}]}>{co}</Text>
+                </View>
                 </View>
               </View>
               <Text numberOfLines={1} style={{fontSize:10,color:"#333333"}}>{lm}</Text>
@@ -127,7 +162,7 @@ function home({navigation}){
                   navigation.navigate('Chatscreen',{id:item.id, disname :item.Displayname})}}
                  > 
                 <Item title={item.Displayname} dp = {item.AvartarURL}  lm = {item.latestmessage.content}
-                lmtime={item.latestmessage.createdAt}
+                lmtime={item.latestmessage.createdAt} co={item.count}
                 />
                 </TouchableOpacity>
         )}
@@ -206,6 +241,15 @@ const styles=StyleSheet.create({
       height:55,
       borderRadius:35,
       backgroundColor:"#1e81b0"
+    },
+    count:{
+      backgroundColor:"#1e81b0",
+      color:"#fff",
+      padding:3,
+      paddingHorizontal:8,
+      borderRadius:25,
+      fontSize:12,
+      fontWeight:"600"
     }
 });
 export default home;
