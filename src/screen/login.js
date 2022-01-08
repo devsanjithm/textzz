@@ -1,159 +1,206 @@
-import React,{useContext,useEffect, useState} from "react";
-import { View,Text,TextInput,StyleSheet,TouchableOpacity, Alert } from 'react-native';
+import React, { useContext, useEffect, useState } from "react";
+import { View, Text, Image, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import NetInfo from "@react-native-community/netinfo";
-function Login({navigation}){
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import AppStatusBar from "./statusbar";
+
+import SplashScreen from 'react-native-splash-screen';
+function Login({ navigation }) {
 
     const [emailcheck, setEmailcheck] = useState("");
     const [passwordcheck, setPasswordcheck] = useState("");
     const [error, setError] = useState("");
+    const [passwordvisible, setPasswordVisible] = useState(false);
 
     useEffect(() => {
         // Subscribe to network state updates
         const unsubscribe = NetInfo.addEventListener((state) => {
-         if(state.isConnected){
-             
-         }else{
-             Alert.alert("offline, please make sure u online"+"\n"+"And try Again")
-         }
+            if (state.isConnected) {
+
+            } else {
+                Alert.alert("Network Disconnected")
+            }
         });
-    
+        SplashScreen.hide();
         return () => {
-          // Unsubscribe to network state updates
-          unsubscribe();
+            // Unsubscribe to network state updates
+            unsubscribe();
         };
-      }, []);
-  
+    }, []);
+
     const handleSubmit = () => {
-        auth().signInWithEmailAndPassword(emailcheck, passwordcheck)
-            .then(user => {
+        if (emailcheck.length != 0 && passwordcheck.length != 0) {
+            setError("");
+            auth().signInWithEmailAndPassword(emailcheck, passwordcheck)
+                .then(user => {
                     console.log("Login Successfully !")
-            })
-            .catch((error) => {
-                console.log(error)
-                if(error.code===("auth/user-not-found")){
-                    setError("Email not found. Create new account");
-                }else{
-                    setError("Invalid Credentials");
-                }
-            });
+                })
+                .catch((error) => {
+                    console.log(error)
+                    if (error.code === ("auth/user-not-found")) {
+                        setError("Email not found. Create new account");
+                    } else {
+                        setError("Invalid Credentials");
+                    }
+                });
+        } else {
+            setError("All fileds are Required");
+        }
 
     }
 
-    return(
+    return (
         <View style={styles.container}>
-            <View style={styles.container1}><Text style={styles.headertext}>Hello Again</Text>
-            <View style={styles.container3}>
-                <View style={styles.container4}>
-                    <Text style={styles.label}>
-                        Email
-                    </Text>
-                    <TextInput 
-                    placeholder="Email-id" 
-                    onChangeText={userEmail=>setEmailcheck(userEmail)}
-                    style={styles.inputbox} 
-                    ></TextInput>
-                    <Text style={styles.label}> 
-                        Password
-                    </Text>
-                    <TextInput 
-                    placeholder="password" 
-                    secureTextEntry={true}
-                    onChangeText={userPass=>setPasswordcheck(userPass)} 
-                    style={styles.inputbox}
-                    ></TextInput>
-                </View>
-                <View style={styles.forpass}>
-                    <Text style={styles.forpass1}>Forgot Your Passoword ?</Text>
-                </View>
-                <View>
-                    <TouchableOpacity  
-                    onPress={handleSubmit}
-                    style={{
-                        backgroundColor:"red", alignItems: "center",
-                        padding: 10,
-                        borderRadius:10,
-                    }}
-                    ><Text style={{color:"white"}}>Login</Text></TouchableOpacity>
-                </View>
-                <View style={[styles.error,
-                error && styles.error1
-                ]}>
-                    <Text style={{textAlign:"center"}}>{error}</Text>
-                </View>
-                <View style={{marginBottom:30,marginTop:10}}>
-                    <TouchableOpacity
-                    onPress={()=>navigation.navigate('Signup')}
-                    ><Text>You don't have an account ? <Text style={{color:"red"}}>Sign Up</Text></Text></TouchableOpacity>
-                </View>
+            <AppStatusBar backgroundColor={"#fff"} barStyle={'dark-content'} />
+            <View style={styles.img}>
+                <Image style={styles.img1} source={require('../assets/message.png')} resizeMode="center" />
             </View>
+            <View style={styles.container1}>
+                <View style={styles.container3}>
+                    <View style={styles.container4}>
+                        <Text style={styles.label}>
+                            Email
+                        </Text>
+                        <TextInput
+                            placeholder="Email Address*"
+                            onChangeText={userEmail => setEmailcheck(userEmail)}
+                            style={styles.inputbox}
+                        ></TextInput>
+                        <Text style={styles.label}>
+                            Password
+                        </Text>
+                        <View style={styles.passbox}>
+                            <TextInput
+                                placeholder="Password*"
+                                secureTextEntry={!passwordvisible}
+                                onChangeText={userPass => setPasswordcheck(userPass)}
+                            ></TextInput>
+                            <View style={{
+                                position: "absolute",
+                                right: 15,
+                                bottom: 10
+                            }}>
+                                {passwordvisible ? <Icon name="visibility" onPress={() => setPasswordVisible(!passwordvisible)} size={20} /> : <Icon onPress={() => setPasswordVisible(!passwordvisible)} name="visibility-off" size={20} />}
+                            </View>
+                        </View>
+                    </View>
+                    <View style={styles.forpass}>
+                        <Text style={styles.forpass1}>Forgot Your Passoword ?</Text>
+                    </View>
+                    <View>
+                        <TouchableOpacity
+                            onPress={handleSubmit}
+                            style={{
+                                backgroundColor: "#ff3f3f", alignItems: "center",
+                                padding: 10,
+                                borderRadius: 10,
+                            }}
+                        ><Text style={{ color: "white" }}>Login</Text></TouchableOpacity>
+                    </View>
+                    <View style={[styles.error,
+                    error && styles.error1
+                    ]}>
+                        <Text style={{ textAlign: "center", color: "red", fontSize: 18 }}>{error}</Text>
+                    </View>
+                    <View style={{ marginBottom: 30, marginTop: 10, alignItems: "flex-end" }}>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Signup')}
+                        ><Text>You don't have an account ? <Text style={{ color: "red" }}>Sign Up</Text></Text></TouchableOpacity>
+                    </View>
+                </View>
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container:{
-        flex:1,
-        padding:25,
-        backgroundColor:"#eaeaea",
-        justifyContent:"center"
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+        justifyContent: "center"
     },
-    container1:{
-        backgroundColor:"#fff",
-        alignItems:"center",
-        marginBottom:50,
-        borderRadius:20
+    img: {
+        borderWidth: 2,
+        width: 190,
+        alignSelf: "center",
+        borderRadius: 100,
+        borderColor: "#6d465b",
+        marginBottom: 50
     },
-    headertext:{
-        fontWeight:"bold",
-        fontSize:30,
-        paddingTop:30,
-        color:"black",
+    img1: {
+        width: 190,
+        height: 190,
+        alignSelf: "center"
+    },
+    container1: {
+        backgroundColor: "#fff",
+        paddingHorizontal: 30,
+    },
+    headertext: {
+        fontWeight: "bold",
+        fontSize: 30,
+        paddingTop: 30,
+        color: "black",
         borderBottomColor: "red",
         borderBottomWidth: StyleSheet.hairlineWidth,
-        paddingBottom:10
+        paddingBottom: 10
 
     },
-    container3:{
-        flexDirection:"column"
+    container3: {
+        flexDirection: "column"
     },
-    container4:{
-        marginBottom:5,
+    container4: {
+        marginBottom: 5,
     },
-    label:{
-        marginRight:24,
-        marginBottom:2,
-        color:"black",
-        paddingTop:10
+    label: {
+        marginRight: 24,
+        marginBottom: 10,
+        color: "black",
+        fontSize: 18,
+        paddingTop: 10,
+        alignSelf: "center",
+        borderBottomColor: "red",
+        borderBottomWidth: StyleSheet.hairlineWidth,
     },
-    inputbox:{
-        marginTop:7,
-        marginLeft:5,
-        borderWidth:1,
-        borderColor: "gray",
+    inputbox: {
+        marginTop: 7,
+        marginLeft: 5,
         borderRadius: 20,
-        paddingLeft:15,
-        height:40,
+        paddingLeft: 20,
+        height: 40,
+        backgroundColor: "#e8e8e8",
+        marginBottom: 10
     },
-    forpass:{
-        marginBottom:15,
-        marginLeft:"auto",
-        marginRight:9,
-        paddingTop:10
+    passbox: {
+        marginTop: 7,
+        marginLeft: 5,
+        borderRadius: 20,
+        paddingLeft: 20,
+        height: 40,
+        backgroundColor: "#e8e8e8",
+        marginBottom: 10,
+        flexDirection: "row"
     },
-    forpass1:{
-        color:"red",
-        fontSize:12,
-        marginBottom:10
+    forpass: {
+        marginBottom: 15,
+        marginLeft: "auto",
+        marginRight: 9,
+        paddingTop: 10
     },
-    error:{
-        width:200,
+    forpass1: {
+        color: "red",
+        fontSize: 12,
+        marginBottom: 10
     },
-    error1:{
-        width:200,
-        margin:10,
-        paddingTop:10
+    error: {
+        width: 200,
+    },
+    error1: {
+        width: 200,
+        margin: 10,
+        paddingTop: 10,
+        marginLeft: 70
     }
 });
 
