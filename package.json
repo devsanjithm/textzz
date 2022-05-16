@@ -22,7 +22,7 @@
     "material-icons-react": "^1.0.4",
     "moment": "^2.29.1",
     "react": "17.0.2",
-    "react-native": "0.66.0",
+    "react-native": "0.68.2",
     "react-native-elements": "github:react-native-elements/react-native-elements#dist",
     "react-native-enhanced-popup-menu": "^0.7.0",
     "react-native-image-crop-picker": "^0.36.4",

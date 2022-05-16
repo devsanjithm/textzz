@@ -3,26 +3,29 @@ import { View, Text, Image, TextInput, StyleSheet, TouchableOpacity, Alert } fro
 import auth from '@react-native-firebase/auth';
 import NetInfo from "@react-native-community/netinfo";
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AppStatusBar from "./statusbar";
 
-import SplashScreen from 'react-native-splash-screen';
 function Login({ navigation }) {
 
     const [emailcheck, setEmailcheck] = useState("");
     const [passwordcheck, setPasswordcheck] = useState("");
     const [error, setError] = useState("");
     const [passwordvisible, setPasswordVisible] = useState(false);
+    const [statusbarcolor, setstatusbarcolor] = useState("#fff");
 
     useEffect(() => {
         // Subscribe to network state updates
         const unsubscribe = NetInfo.addEventListener((state) => {
             if (state.isConnected) {
-
+                setstatusbarcolor("#fff");
+                setError("");
             } else {
-                Alert.alert("Network Disconnected")
+                // Alert.alert("Network Disconnected")
+                setstatusbarcolor("red");
             }
         });
-        SplashScreen.hide();
+
         return () => {
             // Unsubscribe to network state updates
             unsubscribe();
@@ -30,11 +33,16 @@ function Login({ navigation }) {
     }, []);
 
     const handleSubmit = () => {
+        if (statusbarcolor === "red") {
+            setError("Internet Connection Error");
+            return;
+        }
         if (emailcheck.length != 0 && passwordcheck.length != 0) {
             setError("");
             auth().signInWithEmailAndPassword(emailcheck, passwordcheck)
                 .then(user => {
                     console.log("Login Successfully !")
+                    alert("Welcome Again to TextZZ");
                 })
                 .catch((error) => {
                     console.log(error)
@@ -52,7 +60,24 @@ function Login({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <AppStatusBar backgroundColor={"#fff"} barStyle={'dark-content'} />
+            {statusbarcolor === "red" ?
+                <View style={{
+                    position: "absolute",
+                    top: 0,
+                    alignSelf: "center",
+                    width: "100%",
+                    zIndex: 10
+                }}>
+                    <Text style={{
+                        backgroundColor: "red",
+                        color: "white",
+                        padding: 5,
+                        textAlign: "center",
+                    }}><MaterialCommunityIcons
+                            name="network-strength-off" size={20}
+                        /> Network NotAvailable</Text>
+                </View> : null}
+            <AppStatusBar backgroundColor={statusbarcolor} barStyle={'dark-content'} />
             <View style={styles.img}>
                 <Image style={styles.img1} source={require('../assets/message.png')} resizeMode="center" />
             </View>
@@ -72,6 +97,7 @@ function Login({ navigation }) {
                         </Text>
                         <View style={styles.passbox}>
                             <TextInput
+                                style={{ width: 250 }}
                                 placeholder="Password*"
                                 secureTextEntry={!passwordvisible}
                                 onChangeText={userPass => setPasswordcheck(userPass)}

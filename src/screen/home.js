@@ -6,9 +6,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from "../navigator/Authprovider";
 import Loading from "./loading";
 import moment from 'moment';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { firebase } from "@react-native-firebase/storage";
 
-import SplashScreen from 'react-native-splash-screen';
 function home({ navigation }) {
 
   const [info, setInfo] = useState([]);
@@ -17,6 +16,7 @@ function home({ navigation }) {
   const { user, setUser } = useContext(AuthContext)
   const { searchkey, setSearchkey } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
+  const [userimage, setuserimage] = useState("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
   let data = [];
   var d = 1;
   const currentUser = user.uid;
@@ -27,10 +27,8 @@ function home({ navigation }) {
       console.log(item.Displayname)
       const itemData = `${item.Displayname.toUpperCase()}`;
       const textData = text.toUpperCase();
-
       return itemData.indexOf(textData) > -1;
     });
-
     setInfo(newData);
   }
 
@@ -42,24 +40,40 @@ function home({ navigation }) {
       .onSnapshot((querySnapshot) => {
 
         threads = querySnapshot.docs.map(element => {
+
           return {
             id: element.id,
-
-            latestmessage: {
-              content: ""
-            },
             ...element.data()
           };
         });
-        setInfo(threads);
-        setInfo1(threads);
-        SplashScreen.hide();
+        console.log("Before ", threads);
+        updateData();
+        // setInfo(updatedData);
+        // setInfo1(updatedData);
+
         if (loading) {
           setLoading(false);
         }
       });
   }
 
+  async function updateData() {
+    const userData = await firestore().collection("users").get();
+    const updatedData = threads.map((obj) => {
+      var element = userData.docs.find(function (data) {
+        // console.log("loged ", data.data().Displayname);
+        return data.data().id === obj.id;
+      });
+      // console.log(element.data().Displayname);
+      return {
+        ...obj,
+        AvartarURL: element.data().AvatarURL
+      };
+    });
+    console.log(updatedData);
+    setInfo(updatedData);
+    setInfo1(updatedData);
+  }
 
   useEffect(() => {
     setSearchkey(0)
@@ -70,13 +84,26 @@ function home({ navigation }) {
     }
   }, [])
 
+  async function dpi(id) {
+    let data
+    await firestore().collection("users").doc(id).get().then((doc) => {
+      data = doc.data().AvatarURL;
+      // console.log(data);
+    }).catch((err) => {
+      console.log(err);
+    })
+    return data;
+  }
+
   function Item({ title, dp, lm, lmtime, co }) {
+
     function timedate() {
       const date = moment(Number(lmtime)).format('L');
       const time = moment(Number(lmtime)).format('LT');
       const now1 = moment(Number(lmtime)).fromNow();
       return now1
     }
+
     return (
       <View style={styles.item}>
         <View style={styles.imgwrap}>
@@ -126,24 +153,35 @@ function home({ navigation }) {
       <SafeAreaView style={styles.container}>
 
         <Loading loading={loading} />
-        <FlatList
-          data={info}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                setInfo(info1)
-                navigation.navigate('Chatscreen', { id: item.id, disname: item.Displayname })
-              }}
-            >
-              <Item title={item.Displayname} dp={item.AvartarURL} lm={item.latestmessage.content}
-                lmtime={item.latestmessage.createdAt} co={item.count}
-              />
-            </TouchableOpacity>
-          )}
-          keyExtractor={item => item.id}
-          ListHeaderComponent={searchfinder()}
-        />
+        {info.length == 0 ?
+          <View style={{ alignItems: 'center', }}>
+            <Text style={{
+              fontSize: 20,
+              paddingTop: 100
+            }}>
+              No Chats were Found
+            </Text>
+          </View>
+          :
+          <FlatList
+            data={info}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  setInfo(info1)
+                  navigation.navigate('Chatscreen', { id: item.id, disname: item.Displayname })
+                }}
+              >
+
+                <Item title={item.Displayname} dp={item.AvartarURL} lm={item.latestmessage.content}
+                  lmtime={item.latestmessage.createdAt} co={item.count}
+                />
+              </TouchableOpacity>
+            )}
+            keyExtractor={item => item.id}
+            ListHeaderComponent={searchfinder()}
+          />}
         <View style={styles.mesplus}>
           <Pressable onPress={() => navigation.navigate("Selectuser")}>
             <View style={styles.outercircle}>

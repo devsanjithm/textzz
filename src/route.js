@@ -5,8 +5,6 @@ import AuthStack from "./navigator/AuthStack";
 import auth from '@react-native-firebase/auth';
 import { AuthContext } from "./navigator/Authprovider";
 import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import SplashScreen from 'react-native-splash-screen';
 function route() {
   const [initializing, setInitializing] = useState(true);
   const { user, setUser } = useContext(AuthContext)
@@ -31,8 +29,6 @@ function route() {
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
     return subscriber; // unsubscribe on unmount
-
-
   }, []);
 
   if (initializing) return null;

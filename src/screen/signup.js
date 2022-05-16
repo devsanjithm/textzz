@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-nativ
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import AppStatusBar from "./statusbar";
-
+import Loading from "./loading";
 
 function signup({ navigation }) {
 
@@ -13,12 +13,18 @@ function signup({ navigation }) {
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
     const [error, setError] = useState("");
-
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
+        if (email.length === 0 || password.length === 0 || username.length === 0 || phone.length === 0 || displayname.length === 0) {
+            setError("All fileds are Required");
+            return;
+        }
+        setError("");
         try {
             await auth().createUserWithEmailAndPassword(email, password)
                 .then(user => {
+                    setLoading(true);
                     firestore().collection("users").doc(user.user.uid)
                         .set({
                             Email: email,
@@ -29,15 +35,17 @@ function signup({ navigation }) {
                             id: user.user.uid,
                             AvatarURL: "https://www.pngkit.com/png/detail/281-2812821_user-account-management-logo-user-icon-png.png"
                         }).then(() => {
-
+                            setLoading(false);
+                            alert("User Created Successfully");
                             alert("Welcome to TextZZ");
 
                         }).catch((err) => {
                             setError(err.message);
                         })
+
                 }).catch(err => {
                     console.log(err)
-                    alert("User already existes")
+                    alert("User already exists")
                     navigation.goBack();
                 });
         } catch (e) {
@@ -53,7 +61,7 @@ function signup({ navigation }) {
     return (
         <View style={styles.container}>
             <AppStatusBar backgroundColor={"#eaeaea"} barStyle={'dark-content'} />
-
+            <Loading loading={loading} />
             <View style={styles.container1}>
                 <Text style={styles.headertext}>WELCOME !</Text>
                 <View style={styles.container3}>
@@ -64,7 +72,10 @@ function signup({ navigation }) {
                         <TextInput
                             placeholder="Email-id"
                             keyboardType="email-address"
-                            onChangeText={userEmail => setEmail(userEmail)}
+                            onChangeText={userEmail => {
+                                setEmail(userEmail)
+                                setError("")
+                            }}
                             style={styles.inputbox}
                         ></TextInput>
                         <Text style={styles.label}>
@@ -74,7 +85,10 @@ function signup({ navigation }) {
                             placeholder="DisplayName"
                             keyboardType="default"
                             onKeyPress={() => inputcheck()}
-                            onChangeText={userdisplayname => setDisplayname(userdisplayname)}
+                            onChangeText={userdisplayname => {
+                                setDisplayname(userdisplayname)
+                                setError("")
+                            }}
                             style={styles.inputbox}
                         ></TextInput>
                         <Text style={styles.label}>
@@ -84,7 +98,10 @@ function signup({ navigation }) {
                             placeholder="PhoneNumber"
                             keyboardType="numeric"
                             maxLength={10}
-                            onChangeText={userphone => setPhone(userphone)}
+                            onChangeText={userphone => {
+                                setPhone(userphone)
+                                setError("")
+                            }}
                             style={styles.inputbox}
                         ></TextInput>
                         <Text style={styles.label}>
@@ -93,7 +110,10 @@ function signup({ navigation }) {
                         <TextInput
                             placeholder="Password"
                             secureTextEntry={true}
-                            onChangeText={userpass => setPassword(userpass)}
+                            onChangeText={userpass => {
+                                setPassword(userpass)
+                                setError("")
+                            }}
                             style={styles.inputbox}
                         ></TextInput>
                         <View>
@@ -110,7 +130,7 @@ function signup({ navigation }) {
                         <View style={[styles.error,
                         error && styles.error1
                         ]}>
-                            <Text style={{ textAlign: "center" }}>{error}</Text>
+                            <Text style={{ textAlign: "center", color: "red", fontSize: 18 }}>{error}</Text>
                         </View>
                         <View style={{ marginBottom: 30, marginTop: 10 }}>
                             <TouchableOpacity
